@@ -66,9 +66,10 @@ impl<'a> Path<'a> {
         }
     }
 
-    pub fn iter(&self) -> PathIterator {
+    pub fn iter<'b>(&'b self) -> PathIterator<'b> {
         self.into_iter()
     }
+
     pub fn systems(&self) -> impl Iterator<Item = &types::System> {
         self.iter().filter_map(|f| match f {
             PathElement::System(s) => Some(s),
