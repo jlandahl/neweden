@@ -274,9 +274,6 @@ impl std::hash::Hash for System {
 }
 
 #[derive(Debug)]
-struct Celestial {}
-
-#[derive(Debug)]
 pub struct SystemMap(pub(crate) HashMap<SystemId, System>);
 
 impl SystemMap {
