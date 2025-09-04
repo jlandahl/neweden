@@ -364,7 +364,7 @@ mod tests {
     }
 
     #[bench]
-    fn bnech_dijkstra_and_collection(b: &mut test::Bencher) {
+    fn bench_dijkstra_and_collection(b: &mut test::Bencher) {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             b.iter(|| {
@@ -381,7 +381,7 @@ mod tests {
     }
 
     #[bench]
-    fn bnech_dijkstra_preference_highsec(b: &mut test::Bencher) {
+    fn bench_dijkstra_preference_highsec(b: &mut test::Bencher) {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             b.iter(|| {
@@ -399,7 +399,7 @@ mod tests {
     }
 
     #[bench]
-    fn bnech_dijkstra_preference_lowsec(b: &mut test::Bencher) {
+    fn bench_dijkstra_preference_lowsec(b: &mut test::Bencher) {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             b.iter(|| {
@@ -417,7 +417,7 @@ mod tests {
     }
 
     #[bench]
-    fn bnech_dijkstra_longest(b: &mut test::Bencher) {
+    fn bench_dijkstra_longest(b: &mut test::Bencher) {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             b.iter(|| {
@@ -464,7 +464,7 @@ mod tests {
 
     /*
     #[bench]
-    fn bnech_dijkstra_extended(b: &mut test::Bencher) {
+    fn bench_dijkstra_extended(b: &mut test::Bencher) {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             let adj = vec![types::Connection {
