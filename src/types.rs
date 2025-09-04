@@ -423,7 +423,7 @@ pub trait Galaxy {
     fn systems(&self) -> Vec<&System>;
 }
 
-/// Describes the known systesms and their connections in new eden universe.
+/// Describes the known systems and their connections in new eden universe.
 /// `Universe` implements `Navigatable` and can be used in pathfinding.
 ///
 /// `Universe` is intended to be used immutable and can only be instantiated
