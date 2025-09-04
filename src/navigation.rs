@@ -77,6 +77,10 @@ impl<'a> Path<'a> {
             _ => None,
         })
     }
+
+    pub fn waypoints(&self) -> Vec<&'a types::System> {
+        self.waypoints.clone()
+    }
 }
 
 pub struct PathIterator<'a> {
