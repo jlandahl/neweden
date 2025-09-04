@@ -292,8 +292,8 @@ mod tests {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             let path = PathBuilder::new(&universe)
-                .waypoint(&universe.get_system(&30000142.into()).unwrap()) // jita
-                .waypoint(&universe.get_system(&30000049.into()).unwrap()) // camal
+                .waypoint(universe.get_system(&30000142.into()).unwrap()) // jita
+                .waypoint(universe.get_system(&30000049.into()).unwrap()) // camal
                 .build()
                 .unwrap();
             assert_eq!(27, path.jumps());
@@ -311,8 +311,8 @@ mod tests {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             let path = PathBuilder::new(&universe)
-                .waypoint(&universe.get_system(&30000142.into()).unwrap()) // jita
-                .waypoint(&universe.get_system(&30000049.into()).unwrap()) // camal
+                .waypoint(universe.get_system(&30000142.into()).unwrap()) // jita
+                .waypoint(universe.get_system(&30000049.into()).unwrap()) // camal
                 .prefer(Preference::Highsec)
                 .build()
                 .unwrap();
@@ -331,8 +331,8 @@ mod tests {
         if let Ok(uri) = env::var("SQLITE_URI") {
             let universe = DatabaseBuilder::new(&uri).build().unwrap();
             let path = PathBuilder::new(&universe)
-                .waypoint(&universe.get_system(&30000142.into()).unwrap()) // jita
-                .waypoint(&universe.get_system(&30000049.into()).unwrap()) // camal
+                .waypoint(universe.get_system(&30000142.into()).unwrap()) // jita
+                .waypoint(universe.get_system(&30000049.into()).unwrap()) // camal
                 .prefer(Preference::LowsecAndNullsec)
                 .build()
                 .unwrap();
@@ -446,8 +446,8 @@ mod tests {
             let extended = types::ExtendedUniverse::new(&universe, adj);
 
             let path = PathBuilder::new(&extended)
-                .waypoint(&universe.get_system(&30000142.into()).unwrap()) // jita
-                .waypoint(&universe.get_system(&30000049.into()).unwrap()) // camal
+                .waypoint(universe.get_system(&30000142.into()).unwrap()) // jita
+                .waypoint(universe.get_system(&30000049.into()).unwrap()) // camal
                 .build()
                 .unwrap();
 
