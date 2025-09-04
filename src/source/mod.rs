@@ -8,6 +8,3 @@ pub mod postgres;
 
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
-
-#[cfg(feature = "rpc")]
-pub mod rpc;
