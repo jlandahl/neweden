@@ -48,11 +48,11 @@ impl DatabaseBuilder {
     }
 
     pub fn build(self) -> anyhow::Result<types::Universe> {
-        let conn = PgConnection::establish(&self.uri)?;
-        Self::from_connection(&conn)
+        let mut conn = PgConnection::establish(&self.uri)?;
+        Self::from_connection(&mut conn)
     }
 
-    pub(self) fn from_connection(conn: &PgConnection) -> anyhow::Result<types::Universe> {
+    pub(self) fn from_connection(conn: &mut PgConnection) -> anyhow::Result<types::Universe> {
         let systems = mapSolarSystems
             // this is k-space and w-space
             .filter(solarSystemID.lt(32000000))
@@ -83,8 +83,8 @@ impl Queryable<schema::mapSolarSystems::SqlType, DB> for types::System {
         Option<f64>,    // security
     );
 
-    fn build(row: Self::Row) -> Self {
-        types::System {
+    fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
+        Ok(types::System {
             id: types::SystemId(row.1 as u32),
             name: row.2.unwrap(),
             coordinate: types::Coordinate {
@@ -93,7 +93,7 @@ impl Queryable<schema::mapSolarSystems::SqlType, DB> for types::System {
                 z: row.5.unwrap(),
             },
             security: types::Security(row.7.unwrap() as f32),
-        }
+        })
     }
 }
 
@@ -107,18 +107,18 @@ impl Queryable<schema::mapSolarSystemJumps::SqlType, DB> for types::Connection {
         Option<i32>, // toRegionID,
     );
 
-    fn build(row: Self::Row) -> Self {
+    fn build(row: Self::Row) -> diesel::deserialize::Result<Self> {
         let stargate_type = match (row.0, row.1, row.4, row.5) {
             (a, _, _, b) if a != b => types::StargateType::Regional,
             (_, a, b, _) if a != b => types::StargateType::Constellation,
             _ => types::StargateType::Local,
         };
 
-        types::Connection {
+        Ok(types::Connection {
             from: types::SystemId(row.2 as u32),
             to: types::SystemId(row.3 as u32),
             type_: types::ConnectionType::Stargate(stargate_type),
-        }
+        })
     }
 }
 
@@ -131,12 +131,12 @@ mod tests {
     #[test]
     fn test_simple_system_query() {
         let uri = env::var("DATABASE_URL").expect("expected env variable DATABASE_URL set");
-        let conn =
+        let mut conn =
             PgConnection::establish(&uri).expect("expected postgres connection to be established");
         let system = mapSolarSystems
             .filter(solarSystemID.eq(30000049))
             .limit(1)
-            .load::<types::System>(&conn)
+            .load::<types::System>(&mut conn)
             .expect("first row to be returned from postgres");
         assert_eq!("Camal", system[0].name);
     }
@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn test_simple_connection_query() {
         let uri = env::var("DATABASE_URL").expect("expected env variable DATABASE_URL set");
-        let conn =
+        let mut conn =
             PgConnection::establish(&uri).expect("expected postgres connection to be established");
         let res = mapSolarSystemJumps
             .filter(
@@ -157,7 +157,7 @@ mod tests {
             )
             .limit(2)
             .order_by(fromSolarSystemID)
-            .load::<types::Connection>(&conn)
+            .load::<types::Connection>(&mut conn)
             .expect("expect connection");
         let (sg1, sg2) = (&res[0], &res[1]);
         assert_eq!(sg1.from, types::SystemId(30000015));
