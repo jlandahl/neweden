@@ -515,7 +515,7 @@ impl Universe {
     /// Extend the universe with new connections. This is useful to add additional
     /// connection, for example wormholes and find paths. The extended universe will
     /// reuse the systems from the existing universe and only take space for new connections.
-    pub fn extend(&self, connections: AdjacentMap) -> ExtendedUniverse<Self> {
+    pub fn extend<'a>(&'a self, connections: AdjacentMap) -> ExtendedUniverse<'a, Self> {
         ExtendedUniverse::new(self, connections)
     }
 }
