@@ -273,13 +273,10 @@ impl std::hash::Hash for System {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SystemMap(pub(crate) HashMap<SystemId, System>);
 
 impl SystemMap {
-    pub fn empty() -> Self {
-        Self(HashMap::new())
-    }
     pub fn get(&self, k: &SystemId) -> Option<&System> {
         self.0.get(k)
     }
@@ -296,7 +293,7 @@ impl From<Vec<System>> for SystemMap {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct AdjacentMap(pub(crate) HashMap<SystemId, Vec<Connection>>);
 
 impl AdjacentMap {

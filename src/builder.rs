@@ -1,18 +1,12 @@
 use crate::types;
 
+#[derive(Default)]
 pub struct UniverseBuilder {
     systems: types::SystemMap,
     connections: types::AdjacentMap,
 }
 
 impl UniverseBuilder {
-    pub fn new() -> Self {
-        Self {
-            systems: types::SystemMap::empty(),
-            connections: types::AdjacentMap::empty(),
-        }
-    }
-
     pub fn system(mut self, system: types::System) -> Self {
         self.systems.0.insert(system.id, system);
         self
@@ -29,15 +23,6 @@ impl UniverseBuilder {
 
     pub fn build(self) -> types::Universe {
         types::Universe::new(self.systems, self.connections)
-    }
-}
-
-impl Default for UniverseBuilder {
-    fn default() -> Self {
-        Self {
-            systems: types::SystemMap::empty(),
-            connections: types::AdjacentMap::empty(),
-        }
     }
 }
 
