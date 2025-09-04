@@ -2,8 +2,8 @@
  * Copyright (c) 2019. David "Tiran'Sol" Soria Parra
  * All rights reserved.
  */
-use rstar;
 use std::collections::HashMap;
+use itertools::Itertools;
 
 /// Describes the ID of a solar system. Can be casted to from i32 or u32 using .into()
 ///
@@ -126,15 +126,6 @@ pub enum BridgeType {
     BlackOps(JumpdriveSkills), // jump drive calibration, jump fuel conservation
 }
 
-impl std::convert::Into<Lightyears> for BridgeType {
-    fn into(self) -> Lightyears {
-        match self {
-            Self::BlackOps(skills) => skills.range_from_base(Lightyears(4.0)),
-            Self::Titan(skills) => skills.range_from_base(Lightyears(3.0)),
-        }
-    }
-}
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct JumpdriveSkills {
     jump_drive_calibration: u8,
@@ -176,28 +167,6 @@ pub enum JumpdriveShip {
     Jumpfreighter(JumpdriveSkills),
     Supercarrier(JumpdriveSkills),
     Titan(JumpdriveSkills),
-}
-
-impl std::convert::Into<Lightyears> for JumpdriveShip {
-    fn into(self) -> Lightyears {
-        match self {
-            Self::BlackOps(skills) => skills.range_from_base(Lightyears(4.0)),
-            Self::CapitalIndustrial(skills) => skills.range_from_base(Lightyears(5.0)),
-            Self::Carrier(skills) => skills.range_from_base(Lightyears(3.5)),
-            Self::Dreadnought(skills) => skills.range_from_base(Lightyears(3.5)),
-            Self::ForceAuxiliary(skills) => skills.range_from_base(Lightyears(3.5)),
-            Self::Jumpfreighter(skills) => skills.range_from_base(Lightyears(5.0)),
-            Self::Supercarrier(skills) => skills.range_from_base(Lightyears(3.0)),
-            Self::Titan(skills) => skills.range_from_base(Lightyears(3.0)),
-        }
-    }
-}
-
-impl std::convert::Into<Meters> for JumpdriveShip {
-    fn into(self) -> Meters {
-        let ly: Lightyears = self.into();
-        Meters::from(ly)
-    }
 }
 
 /// Information about a stargate.
@@ -270,6 +239,12 @@ pub struct Coordinate {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+}
+
+impl From<(f64, f64, f64)> for Coordinate {
+    fn from((x, y, z): (f64, f64, f64)) -> Self {
+        Coordinate { x, y, z }
+    }
 }
 
 /// Describe a system.
@@ -350,10 +325,35 @@ impl From<Vec<Connection>> for AdjacentMap {
 
 #[derive(Debug, PartialOrd, PartialEq, Copy, Clone)]
 pub struct Lightyears(pub f64);
+
 impl From<Lightyears> for Meters {
     fn from(other: Lightyears) -> Self {
         const LY_IN_KM: f64 = 9_460_730_472_580.8;
         Meters(other.0 * LY_IN_KM * 1_000.0)
+    }
+}
+
+impl From<BridgeType> for Lightyears {
+    fn from(bridge_type: BridgeType) -> Lightyears {
+        match bridge_type {
+            BridgeType::BlackOps(skills) => skills.range_from_base(Lightyears(4.0)),
+            BridgeType::Titan(skills) => skills.range_from_base(Lightyears(3.0)),
+        }
+    }
+}
+
+impl From<JumpdriveShip> for Lightyears {
+    fn from(ship: JumpdriveShip) -> Lightyears {
+        match ship {
+            JumpdriveShip::BlackOps(skills) => skills.range_from_base(Lightyears(4.0)),
+            JumpdriveShip::CapitalIndustrial(skills) => skills.range_from_base(Lightyears(5.0)),
+            JumpdriveShip::Carrier(skills) => skills.range_from_base(Lightyears(3.5)),
+            JumpdriveShip::Dreadnought(skills) => skills.range_from_base(Lightyears(3.5)),
+            JumpdriveShip::ForceAuxiliary(skills) => skills.range_from_base(Lightyears(3.5)),
+            JumpdriveShip::Jumpfreighter(skills) => skills.range_from_base(Lightyears(5.0)),
+            JumpdriveShip::Supercarrier(skills) => skills.range_from_base(Lightyears(3.0)),
+            JumpdriveShip::Titan(skills) => skills.range_from_base(Lightyears(3.0)),
+        }
     }
 }
 
@@ -383,6 +383,7 @@ impl std::ops::Mul<f64> for Lightyears {
 
 #[derive(Debug, PartialOrd, PartialEq, Copy, Clone)]
 pub struct Au(pub f64);
+
 impl From<Au> for Meters {
     fn from(other: Au) -> Self {
         const AU_TO_KM: f64 = 149_597_871.0;
@@ -392,6 +393,7 @@ impl From<Au> for Meters {
 
 #[derive(Debug, PartialOrd, PartialEq, Copy, Clone)]
 pub struct Kilometers(pub f64);
+
 impl From<Kilometers> for Meters {
     fn from(other: Kilometers) -> Self {
         Meters(other.0 * 1_000.0)
@@ -401,12 +403,19 @@ impl From<Kilometers> for Meters {
 #[derive(Debug, PartialOrd, PartialEq, Copy, Clone)]
 pub struct Meters(pub f64);
 
+impl From<JumpdriveShip> for Meters {
+    fn from(ship: JumpdriveShip) -> Meters {
+        let ly: Lightyears = ship.into();
+        Meters::from(ly)
+    }
+}
+
 /// Describes universes that are navigatable. Only navigatable universes can be used
 /// for pathfinding. Two main implementation exists: `Universe` and `ExtendedUniverse`.
 pub trait Navigatable {
-    fn get_system<'a>(&self, id: &SystemId) -> Option<&System>;
-    fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>>;
-    fn get_systems_by_range<'a>(&self, from: &SystemId, range: Meters) -> Option<Vec<&System>>;
+    fn get_system(&self, id: &SystemId) -> Option<&System>;
+    fn get_connections(&self, from: &SystemId) -> Option<Vec<Connection>>;
+    fn get_systems_by_range(&self, from: &SystemId, range: Meters) -> Option<Vec<&System>>;
 }
 
 pub trait Galaxy {
@@ -494,7 +503,7 @@ impl Universe {
     /// is allowed to create it.
     pub(crate) fn new(systems: SystemMap, connections: AdjacentMap) -> Self {
         // TODO: Remove the clone and use references into the map if possible
-        let spatial_data = systems.0.values().map(|s| s.clone()).collect::<Vec<_>>();
+        let spatial_data = systems.0.values().cloned().collect_vec();
 
         Self {
             systems,
@@ -533,7 +542,7 @@ impl Navigatable for Universe {
     }
 
     fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>> {
-        self.connections.0.get(from).map(|v| v.clone())
+        self.connections.0.get(from).cloned()
     }
 
     fn get_systems_by_range<'a>(&self, from: &SystemId, range: Meters) -> Option<Vec<&System>> {
@@ -618,7 +627,7 @@ impl<'b, U: Navigatable> Navigatable for ExtendedUniverse<'b, U> {
     fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>> {
         // TODO: This is highly unoptimal
         let a = self.universe.get_connections(from);
-        let b = self.connections.0.get(&from);
+        let b = self.connections.0.get(from);
         match (a, b) {
             (Some(a), Some(b)) => {
                 let mut v = a.clone();

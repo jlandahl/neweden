@@ -49,20 +49,20 @@ impl<'a> Path<'a> {
     }
 
     pub fn from(&self) -> Option<&'a types::System> {
-        let id = self.path.get(0)?;
+        let id = self.path.first()?;
         match id {
             PathElementInternal::Connection(_) => None,
-            PathElementInternal::System(id) => Some(self.universe.get_system(&id).unwrap()),
-            PathElementInternal::Waypoint(id) => Some(self.universe.get_system(&id).unwrap()),
+            PathElementInternal::System(id) => Some(self.universe.get_system(id).unwrap()),
+            PathElementInternal::Waypoint(id) => Some(self.universe.get_system(id).unwrap()),
         }
     }
 
     pub fn to(&self) -> Option<&'a types::System> {
-        let id = self.path.get(self.path.len() - 1)?;
+        let id = self.path.last()?;
         match id {
             PathElementInternal::Connection(_) => None,
-            PathElementInternal::System(id) => Some(self.universe.get_system(&id).unwrap()),
-            PathElementInternal::Waypoint(id) => Some(self.universe.get_system(&id).unwrap()),
+            PathElementInternal::System(id) => Some(self.universe.get_system(id).unwrap()),
+            PathElementInternal::Waypoint(id) => Some(self.universe.get_system(id).unwrap()),
         }
     }
 
@@ -92,10 +92,10 @@ impl<'a> Iterator for PathIterator<'a> {
         }
         let res = match &self.path.path[self.cur] {
             PathElementInternal::Waypoint(id) => {
-                PathElement::Waypoint(self.path.universe.get_system(&id).unwrap())
+                PathElement::Waypoint(self.path.universe.get_system(id).unwrap())
             }
             PathElementInternal::System(id) => {
-                PathElement::System(self.path.universe.get_system(&id).unwrap())
+                PathElement::System(self.path.universe.get_system(id).unwrap())
             }
             PathElementInternal::Connection(type_) => PathElement::Connection(type_.clone()),
         };
@@ -122,10 +122,10 @@ impl<'a> Iterator for Path<'a> {
         }
         let res = match &self.path[self.cur] {
             PathElementInternal::Waypoint(id) => {
-                PathElement::Waypoint(self.universe.get_system(&id).unwrap())
+                PathElement::Waypoint(self.universe.get_system(id).unwrap())
             }
             PathElementInternal::System(id) => {
-                PathElement::System(self.universe.get_system(&id).unwrap())
+                PathElement::System(self.universe.get_system(id).unwrap())
             }
             PathElementInternal::Connection(type_) => PathElement::Connection(type_.clone()),
         };
@@ -190,7 +190,7 @@ pub struct PathBuilder<'a> {
 impl<'a> PathBuilder<'a> {
     pub fn new(universe: &'a dyn types::Navigatable) -> Self {
         Self {
-            universe: universe,
+            universe,
             waypoints: vec![],
             preference: Preference::Shortest,
         }
@@ -219,13 +219,13 @@ impl<'a> PathBuilder<'a> {
             if let Some(connections) = self.universe.get_connections(&s.id) {
                 connections
                     .iter()
-                    .filter_map(|conn| {
+                    .map(|conn| {
                         let cost = self.preference.cost(self.universe, conn.to);
                         let succ = Succ {
                             id: conn.to,
                             via: Some(conn.type_.clone()),
                         };
-                        Some((succ, cost))
+                        (succ, cost)
                     })
                     .collect()
             } else {
