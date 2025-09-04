@@ -20,3 +20,8 @@ rusqlite = { version = "^0.29", optional = true }
 pathfinding = "^4"
 rstar = "^0.11"
 thiserror = "^1"
+bon = "3.7.2"
+itertools = "0.14.0"
+
+[dev-dependencies]
+criterion = "0.7.0"
