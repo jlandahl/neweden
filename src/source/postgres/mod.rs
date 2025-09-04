@@ -173,6 +173,7 @@ mod tests {
     }
 }
 
+/*
 #[cfg(test)]
 mod benches {
     extern crate test;
@@ -205,3 +206,4 @@ mod benches {
         });
     }
 }
+*/

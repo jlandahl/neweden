@@ -278,7 +278,7 @@ mod tests {
 
     use super::*;
 
-    extern crate test;
+    // extern crate test;
 
     fn name<'a>(e: &PathElement<'a>) -> &'a str {
         match e {
@@ -346,6 +346,7 @@ mod tests {
         }
     }
 
+    /*
     #[bench]
     fn bench_dijkstra(b: &mut test::Bencher) {
         if let Ok(uri) = env::var("SQLITE_URI") {
@@ -432,6 +433,7 @@ mod tests {
             });
         }
     }
+    */
 
     #[test]
     fn test_dijkstra_extended() {
@@ -460,6 +462,7 @@ mod tests {
         }
     }
 
+    /*
     #[bench]
     fn bnech_dijkstra_extended(b: &mut test::Bencher) {
         if let Ok(uri) = env::var("SQLITE_URI") {
@@ -483,4 +486,5 @@ mod tests {
             });
         }
     }
+    */
 }

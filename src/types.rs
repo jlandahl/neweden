@@ -2,8 +2,8 @@
  * Copyright (c) 2019. David "Tiran'Sol" Soria Parra
  * All rights reserved.
  */
-use std::collections::HashMap;
 use itertools::Itertools;
+use std::collections::HashMap;
 
 /// Describes the ID of a solar system. Can be casted to from i32 or u32 using .into()
 ///
@@ -665,7 +665,7 @@ mod dbtests {
 
     use super::*;
 
-    extern crate test;
+    // extern crate test;
 
     #[test]
     fn test_range_query() {
@@ -683,6 +683,7 @@ mod dbtests {
         assert_eq!(115, jumpable.len());
     }
 
+    /*
     #[bench]
     fn bench_range_query(b: &mut test::Bencher) {
         let uri = env::var("SQLITE_URI").expect("expected env variable DATABASE_URL set");
@@ -695,4 +696,5 @@ mod dbtests {
         // let jumpable = systems.into_iter().filter(|x| rules::allows_cynos(x)).collect::<Vec<_>>();
         // assert_eq!(115, jumpable.len());
     }
+    */
 }

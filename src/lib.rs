@@ -2,7 +2,7 @@
  * Copyright (c) 2019. David "Tiran'Sol" Soria Parra
  * All rights reserved.
  */
-#![cfg_attr(test, feature(test))]
+
 //! neweden is a rust library for system information, wayfinding and
 //! range queries for the MMORPG Eve Online from CCP Games.
 //!
