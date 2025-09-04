@@ -22,13 +22,22 @@ impl UniverseBuilder {
         self.connections
             .0
             .entry(connection.from)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(connection);
         self
     }
 
     pub fn build(self) -> types::Universe {
         types::Universe::new(self.systems, self.connections)
+    }
+}
+
+impl Default for UniverseBuilder {
+    fn default() -> Self {
+        Self {
+            systems: types::SystemMap::empty(),
+            connections: types::AdjacentMap::empty(),
+        }
     }
 }
 
@@ -67,7 +76,7 @@ impl<'a, U: types::Galaxy + types::Navigatable> ExtendedUniverseBuilder<'a, U> {
         self.connections
             .0
             .entry(connection.from)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(connection);
         self
     }
