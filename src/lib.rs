@@ -22,17 +22,13 @@
 #[macro_use]
 extern crate diesel;
 
+pub mod builder;
+pub mod navigation;
+pub mod rules;
 pub mod source;
 
-pub mod builder;
-pub use types::*;
-#[allow(dead_code)]
-pub mod rules;
-#[allow(dead_code)]
 mod types;
-
-#[allow(dead_code)]
-pub mod navigation;
+pub use types::*;
 
 #[cfg(test)]
 mod tests {
