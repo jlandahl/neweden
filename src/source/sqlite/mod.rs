@@ -45,29 +45,26 @@ impl DatabaseBuilder {
         let systems = {
             let mut stm = conn.prepare(
                 "
-    		    SELECT solarSystemID, solarSystemName, x, y, z, security
-    			FROM mapSolarSystems
-    		",
+                SELECT solarSystemID, solarSystemName, x, y, z, security
+                FROM mapSolarSystems
+                ",
             )?;
 
-            let result = stm
+            stm
                 .query([])?
                 .mapped(|row| {
                     Ok(types::System {
-                        id: types::SystemId::from(row.get::<_, u32>(0)?),
+                        id: row.get::<_, u32>(0)?.into(),
                         name: row.get(1)?,
-                        coordinate: types::Coordinate {
-                            x: row.get(2)?,
-                            y: row.get(3)?,
-                            z: row.get(4)?,
-                        },
-                        security: types::Security::from(row.get::<_, f32>(5)?),
+                        coordinate: (
+                            row.get(2)?,
+                            row.get(3)?,
+                            row.get(4)?,
+                        ).into(),
+                        security: row.get::<_, f32>(5)?.into(),
                     })
                 })
-                .collect::<Result<Vec<_>, _>>()?;
-            // apparently we can't directly retrun due to borrow rules of stm
-            // so we gather everything into result and return it.
-            result
+                .collect::<Result<Vec<_>, _>>()?
         };
 
         let connections = {
@@ -84,7 +81,7 @@ impl DatabaseBuilder {
     		",
             )?;
 
-            let result = stm
+            stm
                 .query([])?
                 .mapped(|row| {
                     let from: i32 = row.get(2)?;
@@ -105,8 +102,7 @@ impl DatabaseBuilder {
                         type_: types::ConnectionType::Stargate(stargate_type),
                     })
                 })
-                .collect::<Result<Vec<_>, _>>()?;
-            result
+                .collect::<Result<Vec<_>, _>>()?
         };
 
         Ok(types::Universe::new(
