@@ -8,7 +8,7 @@ pub struct UniverseBuilder {
 
 impl UniverseBuilder {
     pub fn system(mut self, system: types::System) -> Self {
-        self.systems.0.insert(system.id, system);
+        self.systems.insert(system);
         self
     }
 

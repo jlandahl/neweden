@@ -313,11 +313,29 @@ impl rstar::PointDistance for System {
 }
 
 #[derive(Debug, Default)]
-pub struct SystemMap(pub(crate) HashMap<SystemId, System>);
+pub struct SystemMap {
+    systems: HashMap<SystemId, System>,
+    name_map: HashMap<String, SystemId>,
+}
 
 impl SystemMap {
-    pub fn get(&self, k: &SystemId) -> Option<&System> {
-        self.0.get(k)
+    pub fn systems(&self) -> Vec<&System> {
+        self.systems.values().collect_vec()
+    }
+
+    pub fn get(&self, id: &SystemId) -> Option<&System> {
+        self.systems.get(id)
+    }
+
+    pub fn get_by_name(&self, name: &str) -> Option<&System> {
+        self.name_map.get(name).and_then(|id| self.systems.get(id))
+    }
+
+    pub fn insert(&mut self, system: System) {
+        let id = system.id;
+        let name = system.name.clone();
+        self.systems.insert(system.id, system);
+        self.name_map.insert(name, id);
     }
 }
 
@@ -329,12 +347,14 @@ impl<I: IntoIterator<Item = System>> From<I> for SystemMap {
 
 impl FromIterator<System> for SystemMap {
     fn from_iter<I: IntoIterator<Item = System>>(systems: I) -> Self {
-        let mut system_map = HashMap::new();
-        for system in systems {
-            system_map.insert(system.id, system);
-        }
+        let systems = HashMap::from_iter(systems.into_iter().map(|s| (s.id, s)));
+        let name_map = HashMap::from_iter(
+            systems
+                .iter()
+                .map(|(id, system)| (system.name.clone(), *id)),
+        );
 
-        Self(system_map)
+        Self { systems, name_map }
     }
 }
 
@@ -498,7 +518,7 @@ impl Universe {
     /// is allowed to create it.
     pub(crate) fn new(systems: SystemMap, connections: AdjacentMap) -> Self {
         // TODO: Remove the clone and use references into the map if possible
-        let spatial_data = systems.0.values().cloned().collect_vec();
+        let spatial_data = systems.systems().into_iter().cloned().collect();
 
         Self {
             systems,
@@ -517,7 +537,7 @@ impl Universe {
 
 impl Galaxy for Universe {
     fn systems(&self) -> Vec<&System> {
-        self.systems.0.values().collect_vec()
+        self.systems.systems()
     }
 
     fn connections(&self) -> Vec<(SystemId, SystemId)> {
@@ -533,13 +553,11 @@ impl Galaxy for Universe {
 
 impl Navigatable for Universe {
     fn get_system<'a>(&self, id: &SystemId) -> Option<&System> {
-        self.systems.0.get(id)
+        self.systems.get(id)
     }
 
     fn get_system_by_name<'a>(&self, name: &str) -> Option<&System> {
-        // this is not efficient under the current design since `systems` is a `HashMap`, but this
-        // is Rust, and there are fewer than 10,000 systems in EVE.
-        self.systems.0.values().find(|s| s.name == name)
+        self.systems.get_by_name(name)
     }
 
     fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>> {
