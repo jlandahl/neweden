@@ -70,15 +70,15 @@ impl DatabaseBuilder {
         let connections = {
             let mut stm = conn.prepare(
                 "
-    		    SELECT
+                SELECT
                     fromRegionID,
                     fromConstellationID,
                     fromSolarSystemID,
                     toSolarSystemID
                     toConstellationID,
                     toRegionID
-    			FROM mapSolarSystemJumps
-    		",
+                FROM mapSolarSystemJumps
+                ",
             )?;
 
             stm
