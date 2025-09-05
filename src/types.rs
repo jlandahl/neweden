@@ -29,6 +29,12 @@ impl From<i32> for SystemId {
     }
 }
 
+impl From<i64> for SystemId {
+    fn from(other: i64) -> Self {
+        SystemId(other as u32)
+    }
+}
+
 /// Describes a security rating. A security rating is between -1.0 and 1.0.
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
 pub struct Security(pub f32); // TODO Bound check
@@ -315,7 +321,6 @@ impl rstar::PointDistance for System {
 #[derive(Debug, Default)]
 pub struct SystemMap {
     systems: HashMap<SystemId, System>,
-    name_map: HashMap<String, SystemId>,
 }
 
 impl SystemMap {
@@ -323,19 +328,13 @@ impl SystemMap {
         self.systems.values().collect_vec()
     }
 
-    pub fn get(&self, id: &SystemId) -> Option<&System> {
-        self.systems.get(id)
-    }
-
-    pub fn get_by_name(&self, name: &str) -> Option<&System> {
-        self.name_map.get(name).and_then(|id| self.systems.get(id))
+    pub fn get<T: Into<SystemId>>(&self, id: T) -> Option<&System> {
+        let id: SystemId = id.into();
+        self.systems.get(&id)
     }
 
     pub fn insert(&mut self, system: System) {
-        let id = system.id;
-        let name = system.name.clone();
         self.systems.insert(system.id, system);
-        self.name_map.insert(name, id);
     }
 }
 
@@ -345,16 +344,12 @@ impl<I: IntoIterator<Item = System>> From<I> for SystemMap {
     }
 }
 
+// TODO: replace this with a constructor method that can return a Result
 impl FromIterator<System> for SystemMap {
     fn from_iter<I: IntoIterator<Item = System>>(systems: I) -> Self {
-        let systems = HashMap::from_iter(systems.into_iter().map(|s| (s.id, s)));
-        let name_map = HashMap::from_iter(
-            systems
-                .iter()
-                .map(|(id, system)| (system.name.clone(), *id)),
-        );
-
-        Self { systems, name_map }
+        Self {
+            systems: HashMap::from_iter(systems.into_iter().map(|s| (s.id, s))),
+        }
     }
 }
 
@@ -475,8 +470,6 @@ impl From<JumpdriveShip> for Meters {
 pub trait Navigatable {
     // TODO: move this to `Galaxy`?
     fn get_system(&self, id: &SystemId) -> Option<&System>;
-    // TODO: move this to `Galaxy`?
-    fn get_system_by_name(&self, name: &str) -> Option<&System>;
     fn get_connections(&self, from: &SystemId) -> Option<Vec<Connection>>;
     fn get_systems_by_range(&self, from: &SystemId, range: Meters) -> Option<Vec<&System>>;
 }
@@ -484,6 +477,11 @@ pub trait Navigatable {
 pub trait Galaxy {
     fn connections(&self) -> Vec<(SystemId, SystemId)>;
     fn systems(&self) -> Vec<&System>;
+
+    #[cfg(feature = "search")]
+    fn search<'a>(&'a self, query: &str) -> anyhow::Result<Vec<&'a System>>;
+    #[cfg(feature = "search")]
+    fn search_one<'a>(&'a self, query: &str) -> Option<&'a System>;
 }
 
 /// Describes the known systems and their connections in new eden universe.
@@ -506,11 +504,12 @@ pub trait Galaxy {
 ///
 /// println!("{:?}", universe.get_system(&system_id).unwrap().name); // Jita
 /// ```
-#[derive(Debug, Default)]
 pub struct Universe {
     pub(crate) systems: SystemMap,
     pub(crate) connections: AdjacentMap,
     pub(crate) rtree: rstar::RTree<System>,
+    #[cfg(feature = "search")]
+    pub(crate) index: crate::search::SearchIndex,
 }
 
 impl Universe {
@@ -520,10 +519,15 @@ impl Universe {
         // TODO: Remove the clone and use references into the map if possible
         let spatial_data = systems.systems().into_iter().cloned().collect();
 
+        #[cfg(feature = "search")]
+        let index = crate::search::SearchIndex::new(systems.systems()).unwrap();
+
         Self {
             systems,
             connections,
             rtree: rstar::RTree::bulk_load(spatial_data),
+            #[cfg(feature = "search")]
+            index,
         }
     }
 
@@ -532,6 +536,24 @@ impl Universe {
     /// reuse the systems from the existing universe and only take space for new connections.
     pub fn extend<'a>(&'a self, connections: AdjacentMap) -> ExtendedUniverse<'a, Self> {
         ExtendedUniverse::new(self, connections)
+    }
+
+    #[cfg(feature = "search")]
+    pub fn search<'a>(&'a self, query: &str) -> anyhow::Result<Vec<&'a System>> {
+        self.index
+            .search(query)?
+            .into_iter()
+            .map(|result| {
+                self.systems
+                    .get(result.id)
+                    .ok_or(anyhow::anyhow!("Missing system {}", result.id))
+            })
+            .collect::<anyhow::Result<Vec<_>>>()
+    }
+
+    #[cfg(feature = "search")]
+    pub fn search_one<'a>(&'a self, query: &str) -> Option<&'a System> {
+        self.search(query).ok().and_then(|systems| systems.into_iter().next())
     }
 }
 
@@ -549,15 +571,21 @@ impl Galaxy for Universe {
         }
         connections
     }
+
+    #[cfg(feature = "search")]
+    fn search<'a>(&'a self, query: &str) -> anyhow::Result<Vec<&'a System>> {
+        self.search(query)
+    }
+
+    #[cfg(feature = "search")]
+    fn search_one<'a>(&'a self, query: &str) -> Option<&'a System> {
+        self.search_one(query)
+    }
 }
 
 impl Navigatable for Universe {
     fn get_system<'a>(&self, id: &SystemId) -> Option<&System> {
-        self.systems.get(id)
-    }
-
-    fn get_system_by_name<'a>(&self, name: &str) -> Option<&System> {
-        self.systems.get_by_name(name)
+        self.systems.get(*id)
     }
 
     fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>> {
@@ -620,7 +648,7 @@ impl<'a, U: Galaxy + Navigatable> ExtendedUniverse<'a, U> {
     }
 }
 
-impl<'a, U: Galaxy> Galaxy for ExtendedUniverse<'a, U> {
+impl<'u, U: Galaxy> Galaxy for ExtendedUniverse<'u, U> {
     fn systems(&self) -> Vec<&System> {
         self.universe.systems()
     }
@@ -637,15 +665,21 @@ impl<'a, U: Galaxy> Galaxy for ExtendedUniverse<'a, U> {
         }
         connections
     }
+
+    #[cfg(feature = "search")]
+    fn search<'a>(&'a self, query: &str) -> anyhow::Result<Vec<&'a System>> {
+        self.universe.search(query)
+    }
+
+    #[cfg(feature = "search")]
+    fn search_one<'a>(&'a self, query: &str) -> Option<&'a System> {
+        self.universe.search_one(query)
+    }
 }
 
 impl<'b, U: Navigatable> Navigatable for ExtendedUniverse<'b, U> {
     fn get_system<'a>(&self, id: &SystemId) -> Option<&System> {
         self.universe.get_system(id)
-    }
-
-    fn get_system_by_name<'a>(&self, name: &str) -> Option<&System> {
-        self.universe.get_system_by_name(name)
     }
 
     fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>> {

@@ -27,7 +27,10 @@ pub mod navigation;
 pub mod rules;
 pub mod source;
 
+#[cfg(feature = "search")]
+mod search;
 mod types;
+
 pub use types::*;
 
 #[cfg(test)]
