@@ -49,7 +49,7 @@ impl<'a, U: types::Galaxy + types::Navigatable> ExtendedUniverseBuilder<'a, U> {
             let connection = types::Connection {
                 from: location,
                 to: end.id,
-                type_: types::ConnectionType::Bridge(type_.clone()),
+                r#type: types::ConnectionType::Bridge(type_.clone()),
             };
             self = self.connection(connection);
         }

@@ -94,7 +94,7 @@ impl From<Security> for SecurityClass {
 pub struct Connection {
     pub from: SystemId,
     pub to: SystemId,
-    pub type_: ConnectionType,
+    pub r#type: ConnectionType,
 }
 
 /// The type of connection between two systems.

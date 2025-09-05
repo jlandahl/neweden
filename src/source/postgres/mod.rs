@@ -117,7 +117,7 @@ impl Queryable<schema::mapSolarSystemJumps::SqlType, DB> for types::Connection {
         Ok(types::Connection {
             from: types::SystemId(row.2 as u32),
             to: types::SystemId(row.3 as u32),
-            type_: types::ConnectionType::Stargate(stargate_type),
+            r#type: types::ConnectionType::Stargate(stargate_type),
         })
     }
 }
@@ -164,10 +164,10 @@ mod tests {
         assert_eq!(sg1.to, types::SystemId(30001047));
         assert_eq!(sg2.from, types::SystemId(30000049));
         assert_eq!(sg2.to, types::SystemId(30000045));
-        if let types::ConnectionType::Stargate(jt) = &sg1.type_ {
+        if let types::ConnectionType::Stargate(jt) = &sg1.r#type {
             assert_eq!(jt, &types::StargateType::Regional);
         }
-        if let types::ConnectionType::Stargate(jt) = &sg2.type_ {
+        if let types::ConnectionType::Stargate(jt) = &sg2.r#type {
             assert_eq!(jt, &types::StargateType::Local);
         }
     }

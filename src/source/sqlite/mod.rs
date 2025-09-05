@@ -93,7 +93,7 @@ impl DatabaseBuilder {
                     Ok(types::Connection {
                         from: from.into(),
                         to: to.into(),
-                        type_: types::ConnectionType::Stargate(stargate_type),
+                        r#type: types::ConnectionType::Stargate(stargate_type),
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?

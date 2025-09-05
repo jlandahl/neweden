@@ -228,7 +228,7 @@ impl<'a> PathBuilder<'a> {
                         let cost = self.preference.cost(self.universe, conn.to);
                         let succ = Succ {
                             id: conn.to,
-                            via: Some(conn.type_.clone()),
+                            via: Some(conn.r#type.clone()),
                         };
                         (succ, cost)
                     })
@@ -285,6 +285,8 @@ mod tests {
 
     // extern crate test;
 
+    // TODO: remove this if it's not used by any of the commented-out code
+    #[allow(dead_code)]
     fn name<'a>(e: &PathElement<'a>) -> &'a str {
         match e {
             PathElement::System(sys) => &sys.name,
@@ -447,7 +449,7 @@ mod tests {
             let adj = vec![types::Connection {
                 from: 30002718.into(), // Rancer
                 to: 30000004.into(),   // Jark
-                type_: types::ConnectionType::Wormhole(types::WormholeType::VeryLarge),
+                r#type: types::ConnectionType::Wormhole(types::WormholeType::VeryLarge),
             }]
             .into();
             let extended = types::ExtendedUniverse::new(&universe, adj);
