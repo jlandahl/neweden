@@ -320,8 +320,14 @@ impl SystemMap {
     }
 }
 
-impl From<Vec<System>> for SystemMap {
-    fn from(systems: Vec<System>) -> Self {
+impl<I: IntoIterator<Item = System>> From<I> for SystemMap {
+    fn from(systems: I) -> Self {
+        Self::from_iter(systems)
+    }
+}
+
+impl FromIterator<System> for SystemMap {
+    fn from_iter<I: IntoIterator<Item = System>>(systems: I) -> Self {
         let mut system_map = HashMap::new();
         for system in systems {
             system_map.insert(system.id, system);
@@ -334,8 +340,14 @@ impl From<Vec<System>> for SystemMap {
 #[derive(Debug, Default)]
 pub struct AdjacentMap(pub(crate) HashMap<SystemId, Vec<Connection>>);
 
-impl From<Vec<Connection>> for AdjacentMap {
-    fn from(connections: Vec<Connection>) -> Self {
+impl<I: IntoIterator<Item = Connection>> From<I> for AdjacentMap {
+    fn from(connections: I) -> Self {
+        Self::from_iter(connections)
+    }
+}
+
+impl FromIterator<Connection> for AdjacentMap {
+    fn from_iter<I: IntoIterator<Item = Connection>>(connections: I) -> Self {
         let mut adjacent_map = HashMap::new();
         for connection in connections {
             adjacent_map
