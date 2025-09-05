@@ -50,17 +50,12 @@ impl DatabaseBuilder {
                 ",
             )?;
 
-            stm
-                .query([])?
+            stm.query([])?
                 .mapped(|row| {
                     Ok(types::System {
                         id: row.get::<_, u32>(0)?.into(),
                         name: row.get(1)?,
-                        coordinate: (
-                            row.get(2)?,
-                            row.get(3)?,
-                            row.get(4)?,
-                        ).into(),
+                        coordinate: (row.get(2)?, row.get(3)?, row.get(4)?).into(),
                         security: row.get::<_, f32>(5)?.into(),
                     })
                 })
@@ -81,8 +76,7 @@ impl DatabaseBuilder {
                 ",
             )?;
 
-            stm
-                .query([])?
+            stm.query([])?
                 .mapped(|row| {
                     let from: i32 = row.get(2)?;
                     let to: i32 = row.get(3)?;

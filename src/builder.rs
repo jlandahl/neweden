@@ -35,7 +35,7 @@ impl<'a, U: types::Galaxy + types::Navigatable> ExtendedUniverseBuilder<'a, U> {
     pub fn new(universe: &'a U) -> Self {
         Self {
             universe,
-            connections: Default::default()
+            connections: Default::default(),
         }
     }
 
