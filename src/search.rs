@@ -20,12 +20,13 @@ impl SearchIndex {
     pub(crate) fn new<'a>(systems: impl IntoIterator<Item = &'a System>) -> Result<Self> {
         let mut builder = schema::Schema::builder();
 
-        let tokenizer = TextAnalyzer::builder(SimpleTokenizer::default())
-            .filter(AlphaNumOnlyFilter)
+        let tokenizer = TextAnalyzer::builder(NgramTokenizer::new(2, 3, false).unwrap())
+            .filter(AsciiFoldingFilter)
+            .filter(LowerCaser)
             .build();
 
         let text_field_indexing = TextFieldIndexing::default()
-            .set_tokenizer("alphanum")
+            .set_tokenizer("tok")
             .set_index_option(IndexRecordOption::WithFreqsAndPositions);
         let text_options = TextOptions::default()
             .set_indexing_options(text_field_indexing)
@@ -37,7 +38,7 @@ impl SearchIndex {
         let schema = builder.build();
 
         let index = Index::create_in_ram(schema);
-        index.tokenizers().register("alphanum", tokenizer);
+        index.tokenizers().register("tok", tokenizer);
 
         let mut writer: IndexWriter = index.writer(15_000_000)?;
 
