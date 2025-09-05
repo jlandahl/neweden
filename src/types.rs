@@ -260,6 +260,25 @@ pub struct System {
     pub security: Security,
 }
 
+impl System {
+    fn to_point(&self) -> [f64; 3] {
+        [self.coordinate.x, self.coordinate.y, self.coordinate.z]
+    }
+
+    fn point_distance(&self, point: &[f64; 3]) -> Meters {
+        let d_x = self.coordinate.x - point[0];
+        let d_y = self.coordinate.y - point[1];
+        let d_z = self.coordinate.z - point[2];
+        let distance = (d_x * d_x + d_y * d_y + d_z * d_z).sqrt();
+        // We must return the squared distance!
+        Meters(distance)
+    }
+
+    pub fn distance(&self, other: &System) -> Meters {
+        self.point_distance(&other.to_point())
+    }
+}
+
 impl std::cmp::Eq for System {}
 impl std::cmp::PartialEq for System {
     fn eq(&self, other: &Self) -> bool {
@@ -270,6 +289,25 @@ impl std::cmp::PartialEq for System {
 impl std::hash::Hash for System {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.id.hash(state);
+    }
+}
+
+impl rstar::RTreeObject for System {
+    type Envelope = rstar::AABB<[f64; 3]>;
+
+    fn envelope(&self) -> Self::Envelope {
+        rstar::AABB::from_point(self.to_point())
+    }
+}
+
+impl rstar::PointDistance for System {
+    fn distance_2(&self, point: &[f64; 3]) -> f64 {
+        let d_x = self.coordinate.x - point[0];
+        let d_y = self.coordinate.y - point[1];
+        let d_z = self.coordinate.z - point[2];
+        let distance = (d_x * d_x + d_y * d_y + d_z * d_z).sqrt();
+        // We must return the squared distance!
+        distance * distance
     }
 }
 
@@ -296,11 +334,6 @@ impl From<Vec<System>> for SystemMap {
 #[derive(Debug, Default)]
 pub struct AdjacentMap(pub(crate) HashMap<SystemId, Vec<Connection>>);
 
-impl AdjacentMap {
-    pub fn empty() -> Self {
-        Self(HashMap::new())
-    }
-}
 impl From<Vec<Connection>> for AdjacentMap {
     fn from(connections: Vec<Connection>) -> Self {
         let mut adjacent_map = HashMap::new();
@@ -407,7 +440,9 @@ impl From<JumpdriveShip> for Meters {
 /// Describes universes that are navigatable. Only navigatable universes can be used
 /// for pathfinding. Two main implementation exists: `Universe` and `ExtendedUniverse`.
 pub trait Navigatable {
+    // TODO: move this to `Galaxy`?
     fn get_system(&self, id: &SystemId) -> Option<&System>;
+    // TODO: move this to `Galaxy`?
     fn get_system_by_name(&self, name: &str) -> Option<&System>;
     fn get_connections(&self, from: &SystemId) -> Option<Vec<Connection>>;
     fn get_systems_by_range(&self, from: &SystemId, range: Meters) -> Option<Vec<&System>>;
@@ -438,62 +473,14 @@ pub trait Galaxy {
 ///
 /// println!("{:?}", universe.get_system(&system_id).unwrap().name); // Jita
 /// ```
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Universe {
     pub(crate) systems: SystemMap,
     pub(crate) connections: AdjacentMap,
     pub(crate) rtree: rstar::RTree<System>,
 }
 
-impl System {
-    fn to_point(&self) -> [f64; 3] {
-        [self.coordinate.x, self.coordinate.y, self.coordinate.z]
-    }
-
-    fn point_distance(&self, point: &[f64; 3]) -> Meters {
-        let d_x = self.coordinate.x - point[0];
-        let d_y = self.coordinate.y - point[1];
-        let d_z = self.coordinate.z - point[2];
-        let distance = (d_x * d_x + d_y * d_y + d_z * d_z).sqrt();
-        // We must return the squared distance!
-        Meters(distance)
-    }
-
-    pub fn distance(&self, other: &System) -> Meters {
-        self.point_distance(&other.to_point())
-    }
-}
-
-impl rstar::RTreeObject for System {
-    type Envelope = rstar::AABB<[f64; 3]>;
-
-    fn envelope(&self) -> Self::Envelope {
-        rstar::AABB::from_point(self.to_point())
-    }
-}
-
-impl rstar::PointDistance for System {
-    fn distance_2(&self, point: &[f64; 3]) -> f64 {
-        let d_x = self.coordinate.x - point[0];
-        let d_y = self.coordinate.y - point[1];
-        let d_z = self.coordinate.z - point[2];
-        let distance = (d_x * d_x + d_y * d_y + d_z * d_z).sqrt();
-        // We must return the squared distance!
-        distance * distance
-    }
-}
-
 impl Universe {
-    /// Create an empty universe with no systems or connections. This can be useful
-    /// as a placeholder, or to extend your own universe using `ExtendedUniverse`.
-    pub fn empty() -> Self {
-        Self {
-            systems: SystemMap(HashMap::new()),
-            connections: AdjacentMap(HashMap::new()),
-            rtree: rstar::RTree::new(),
-        }
-    }
-
     /// Create a new universe. This is internal to the crate as only a data source
     /// is allowed to create it.
     pub(crate) fn new(systems: SystemMap, connections: AdjacentMap) -> Self {
@@ -508,7 +495,7 @@ impl Universe {
     }
 
     /// Extend the universe with new connections. This is useful to add additional
-    /// connection, for example wormholes and find paths. The extended universe will
+    /// connections, for example wormholes and find paths. The extended universe will
     /// reuse the systems from the existing universe and only take space for new connections.
     pub fn extend<'a>(&'a self, connections: AdjacentMap) -> ExtendedUniverse<'a, Self> {
         ExtendedUniverse::new(self, connections)
@@ -517,7 +504,7 @@ impl Universe {
 
 impl Galaxy for Universe {
     fn systems(&self) -> Vec<&System> {
-        self.systems.0.values().collect::<Vec<&System>>()
+        self.systems.0.values().collect_vec()
     }
 
     fn connections(&self) -> Vec<(SystemId, SystemId)> {
