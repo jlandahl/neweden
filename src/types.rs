@@ -104,6 +104,7 @@ pub enum ConnectionType {
     Stargate(StargateType),
     Bridge(BridgeType),
     Wormhole(WormholeType),
+    Ansiblex,
 }
 
 /// The type of bridge. Can be either a titan bridge
