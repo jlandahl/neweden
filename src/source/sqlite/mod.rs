@@ -105,9 +105,6 @@ impl DatabaseBuilder {
                 .collect::<Result<Vec<_>, _>>()?
         };
 
-        Ok(types::Universe::new(
-            types::SystemMap::from(systems),
-            types::AdjacentMap::from(connections),
-        ))
+        Ok(types::Universe::new(systems.into(), connections.into()))
     }
 }
