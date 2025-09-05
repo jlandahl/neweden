@@ -408,6 +408,7 @@ impl From<JumpdriveShip> for Meters {
 /// for pathfinding. Two main implementation exists: `Universe` and `ExtendedUniverse`.
 pub trait Navigatable {
     fn get_system(&self, id: &SystemId) -> Option<&System>;
+    fn get_system_by_name(&self, name: &str) -> Option<&System>;
     fn get_connections(&self, from: &SystemId) -> Option<Vec<Connection>>;
     fn get_systems_by_range(&self, from: &SystemId, range: Meters) -> Option<Vec<&System>>;
 }
@@ -535,6 +536,12 @@ impl Navigatable for Universe {
         self.systems.0.get(id)
     }
 
+    fn get_system_by_name<'a>(&self, name: &str) -> Option<&System> {
+        // this is not efficient under the current design since `systems` is a `HashMap`, but this
+        // is Rust, and there are fewer than 10,000 systems in EVE.
+        self.systems.0.values().find(|s| s.name == name)
+    }
+
     fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>> {
         self.connections.0.get(from).cloned()
     }
@@ -594,6 +601,7 @@ impl<'a, U: Galaxy + Navigatable> ExtendedUniverse<'a, U> {
         }
     }
 }
+
 impl<'a, U: Galaxy> Galaxy for ExtendedUniverse<'a, U> {
     fn systems(&self) -> Vec<&System> {
         self.universe.systems()
@@ -616,6 +624,10 @@ impl<'a, U: Galaxy> Galaxy for ExtendedUniverse<'a, U> {
 impl<'b, U: Navigatable> Navigatable for ExtendedUniverse<'b, U> {
     fn get_system<'a>(&self, id: &SystemId) -> Option<&System> {
         self.universe.get_system(id)
+    }
+
+    fn get_system_by_name<'a>(&self, name: &str) -> Option<&System> {
+        self.universe.get_system_by_name(name)
     }
 
     fn get_connections<'a>(&self, from: &SystemId) -> Option<Vec<Connection>> {
