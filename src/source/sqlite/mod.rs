@@ -69,30 +69,34 @@ impl DatabaseBuilder {
                     fromRegionID,
                     fromConstellationID,
                     fromSolarSystemID,
-                    toSolarSystemID
+                    toRegionID,
                     toConstellationID,
-                    toRegionID
+                    toSolarSystemID
                 FROM mapSolarSystemJumps
                 ",
             )?;
 
             stm.query([])?
                 .mapped(|row| {
-                    let from: i32 = row.get(2)?;
-                    let to: i32 = row.get(3)?;
-                    let stargate_type = match (
-                        row.get::<_, i32>(0),
-                        row.get::<_, i32>(1),
-                        row.get::<_, i32>(4),
-                        row.get::<_, i32>(5),
-                    ) {
-                        (a, _, _, b) if a != b => types::StargateType::Regional,
-                        (_, a, b, _) if a != b => types::StargateType::Constellation,
-                        _ => types::StargateType::Local,
+                    let from_region: i32 = row.get(0)?;
+                    let from_constellation: i32 = row.get(1)?;
+                    let from_system: i32 = row.get(2)?;
+
+                    let to_region: i32 = row.get(3)?;
+                    let to_constellation: i32 = row.get(4)?;
+                    let to_system: i32 = row.get(5)?;
+
+                    let stargate_type = if from_region != to_region {
+                        types::StargateType::Regional
+                    } else if from_constellation != to_constellation {
+                       types::StargateType::Constellation
+                    } else {
+                       types::StargateType::Local
                     };
+
                     Ok(types::Connection {
-                        from: from.into(),
-                        to: to.into(),
+                        from: from_system.into(),
+                        to: to_system.into(),
                         r#type: types::ConnectionType::Stargate(stargate_type),
                     })
                 })
