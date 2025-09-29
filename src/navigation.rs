@@ -206,7 +206,7 @@ impl<'a> PathBuilder<'a> {
         self
     }
 
-    pub fn waypoints(mut self, systems: Vec<&'a types::System>) -> Self {
+    pub fn waypoints(mut self, systems: impl IntoIterator<Item = &'a types::System>) -> Self {
         self.waypoints.extend(systems);
         self
     }
