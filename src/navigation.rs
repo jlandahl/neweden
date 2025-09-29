@@ -3,6 +3,8 @@
  * All rights reserved.
  */
 
+use std::collections::HashSet;
+
 use pathfinding::prelude::dijkstra;
 
 use crate::types;
@@ -189,6 +191,7 @@ impl std::cmp::PartialEq for Succ {
 pub struct PathBuilder<'a> {
     universe: &'a dyn types::Navigatable,
     waypoints: Vec<&'a types::System>,
+    avoid: HashSet<&'a types::SystemId>,
     preference: Preference,
 }
 
@@ -196,7 +199,8 @@ impl<'a> PathBuilder<'a> {
     pub fn new(universe: &'a dyn types::Navigatable) -> Self {
         Self {
             universe,
-            waypoints: vec![],
+            waypoints: Default::default(),
+            avoid: Default::default(),
             preference: Preference::Shortest,
         }
     }
@@ -216,6 +220,16 @@ impl<'a> PathBuilder<'a> {
         self
     }
 
+    pub fn avoid(mut self, system: &'a types::System) -> Self {
+        self.avoid.insert(&system.id);
+        self
+    }
+
+    pub fn avoid_many(mut self, systems: impl IntoIterator<Item = &'a types::System>) -> Self {
+        self.avoid.extend(systems.into_iter().map(|s| &s.id));
+        self
+    }
+
     // TODO: We need to include the Connection itself, otherwise connections can be
     // ambiguous in the rare case that a wormhole leads to the same system next door.
     // In practise it likely doesn't matter.
@@ -224,6 +238,7 @@ impl<'a> PathBuilder<'a> {
             if let Some(connections) = self.universe.get_connections(&s.id) {
                 connections
                     .iter()
+                    .filter(|conn| !self.avoid.contains(&conn.to))
                     .map(|conn| {
                         let cost = self.preference.cost(self.universe, conn.to);
                         let succ = Succ {
