@@ -18,6 +18,7 @@ rpc = []
 [dependencies]
 anyhow = "^1"
 bon = "3"
+chrono = "0.4"
 diesel = { version = "2", optional = true, features = ["postgres"] }
 itertools = "0.14"
 pathfinding = "4"
