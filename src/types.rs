@@ -114,6 +114,24 @@ pub enum ConnectionType {
     Ansiblex,
 }
 
+impl std::fmt::Display for ConnectionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConnectionType::Stargate(t) => write!(f, "Stargate ({t:?})"),
+            ConnectionType::Bridge(bridge_type) => match bridge_type {
+                BridgeType::Titan(_) => write!(f, "Titan Bridge"),
+                BridgeType::BlackOps(_) => write!(f, "BlackOps Bridge"),
+            },
+            ConnectionType::Wormhole(wh) => write!(
+                f,
+                "Wormhole (sig: {}, size: {}, remaining: {} hours)",
+                wh.signature, wh.max_ship_size, wh.remaining_hours
+            ),
+            ConnectionType::Ansiblex => write!(f, "Ansiblex"),
+        }
+    }
+}
+
 /// The type of bridge. Can be either a titan bridge
 /// or a blackops bridge. Provides information about the
 /// skill-level used. You can calculate the bridge distance
@@ -203,6 +221,19 @@ pub enum WormholeMaxShipSize {
     XLarge,
     Capital,
     Unknown,
+}
+
+impl std::fmt::Display for WormholeMaxShipSize {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            WormholeMaxShipSize::Small => write!(f, "small"),
+            WormholeMaxShipSize::Medium => write!(f, "medium"),
+            WormholeMaxShipSize::Large => write!(f, "large"),
+            WormholeMaxShipSize::XLarge => write!(f, "xlarge"),
+            WormholeMaxShipSize::Capital => write!(f, "capital"),
+            WormholeMaxShipSize::Unknown => write!(f, "unknown"),
+        }
+    }
 }
 
 /// Information about a wormhole.
