@@ -317,6 +317,8 @@ pub struct System {
     pub coordinate: Coordinate,
     // The security rating of the system.
     pub security: Security,
+    // The name of the region the system is in.
+    pub region_name: String,
 }
 
 impl System {

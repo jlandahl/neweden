@@ -93,6 +93,7 @@ impl Queryable<schema::mapSolarSystems::SqlType, DB> for types::System {
                 z: row.5.unwrap(),
             },
             security: types::Security(row.7.unwrap() as f32),
+            region_name: "[TODO]".to_string(), // TODO: join region name
         })
     }
 }

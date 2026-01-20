@@ -45,8 +45,9 @@ impl DatabaseBuilder {
         let systems = {
             let mut stm = conn.prepare(
                 "
-                SELECT solarSystemID, solarSystemName, x, y, z, security
-                FROM mapSolarSystems
+                SELECT solarSystemID, solarSystemName, s.x, s.y, s.z, security, regionName
+                FROM mapSolarSystems s
+                JOIN mapRegions r USING (regionID)
                 ",
             )?;
 
@@ -57,6 +58,7 @@ impl DatabaseBuilder {
                         name: row.get(1)?,
                         coordinate: (row.get(2)?, row.get(3)?, row.get(4)?).into(),
                         security: row.get::<_, f32>(5)?.into(),
+                        region_name: row.get(6)?,
                     })
                 })
                 .collect::<Result<Vec<_>, _>>()?
@@ -89,9 +91,9 @@ impl DatabaseBuilder {
                     let stargate_type = if from_region != to_region {
                         types::StargateType::Regional
                     } else if from_constellation != to_constellation {
-                       types::StargateType::Constellation
+                        types::StargateType::Constellation
                     } else {
-                       types::StargateType::Local
+                        types::StargateType::Local
                     };
 
                     Ok(types::Connection {
