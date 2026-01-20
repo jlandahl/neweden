@@ -2,6 +2,7 @@
  * Copyright (c) 2019. David "Tiran'Sol" Soria Parra
  * All rights reserved.
  */
+use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -109,7 +110,7 @@ pub struct Connection {
 pub enum ConnectionType {
     Stargate(StargateType),
     Bridge(BridgeType),
-    Wormhole(WormholeType),
+    Wormhole(Wormhole),
     Ansiblex,
 }
 
@@ -182,6 +183,26 @@ pub enum StargateType {
     Local,
     Constellation,
     Regional,
+}
+
+/// Wormhole definititions, a subset of fields used by EVE Scout
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Wormhole {
+    pub expires: DateTime<Utc>,
+    pub remaining_hours: u16,
+    pub signature: String,
+    pub max_ship_size: WormholeMaxShipSize,
+}
+
+/// Wormhole max ship size, as defined by EVE Scout
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum WormholeMaxShipSize {
+    Small,
+    Medium,
+    Large,
+    XLarge,
+    Capital,
+    Unknown,
 }
 
 /// Information about a wormhole.
@@ -553,7 +574,9 @@ impl Universe {
 
     #[cfg(feature = "search")]
     pub fn search_one<'a>(&'a self, query: &str) -> Option<&'a System> {
-        self.search(query).ok().and_then(|systems| systems.into_iter().next())
+        self.search(query)
+            .ok()
+            .and_then(|systems| systems.into_iter().next())
     }
 }
 
