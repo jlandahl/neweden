@@ -293,6 +293,8 @@ impl<'a> PathBuilder<'a> {
 mod tests {
     use std::env;
 
+    use chrono::Utc;
+
     use crate::source::sqlite::DatabaseBuilder;
     use crate::types::Navigatable;
 
@@ -464,7 +466,12 @@ mod tests {
             let adj = vec![types::Connection {
                 from: 30002718.into(), // Rancer
                 to: 30000004.into(),   // Jark
-                r#type: types::ConnectionType::Wormhole(types::WormholeType::VeryLarge),
+                r#type: types::ConnectionType::Wormhole(types::Wormhole {
+                    expires: Utc::now(),
+                    remaining_hours: 0,
+                    signature: "X".to_string(),
+                    max_ship_size: types::WormholeMaxShipSize::Unknown,
+                }),
             }]
             .into();
             let extended = types::ExtendedUniverse::new(&universe, adj);
